@@ -6,6 +6,18 @@ set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard to use")
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
 set(GAME_STR "MM")
 project(2s2h VERSION 4.0.2 LANGUAGES C CXX)
+
+if(VITA)
+    set(CMAKE_SYSTEM_NAME "Vita")
+    set(USE_OPENGLES ON CACHE BOOL "Use the OpenGL ES renderer path (vitaGL)" FORCE)
+    add_compile_definitions(__VITA__)
+    foreach(lang C CXX)
+        set(CMAKE_${lang}_LINK_LIBRARY_USING_WHOLE_ARCHIVE_SUPPORTED TRUE)
+        set(CMAKE_${lang}_LINK_LIBRARY_USING_WHOLE_ARCHIVE
+            "LINKER:--whole-archive" "<LINK_ITEM>" "LINKER:--no-whole-archive")
+    endforeach()
+endif()
+
 include(CMake/2ship-cvars.cmake)
 include(CMake/lus-cvars.cmake)
 set(SPDLOG_LEVEL_TRACE 0)
@@ -260,7 +272,7 @@ install(CODE "
 
 endif()
 
-if(CMAKE_SYSTEM_NAME MATCHES "Windows|NintendoSwitch|CafeOS")
+if(CMAKE_SYSTEM_NAME MATCHES "Windows|NintendoSwitch|CafeOS|Vita")
 install(FILES ${CMAKE_SOURCE_DIR}/README.md DESTINATION . COMPONENT 2s2h RENAME readme.txt )
 install(CODE "file(MAKE_DIRECTORY \"\${CMAKE_INSTALL_PREFIX}/mods\")" COMPONENT 2s2h)
 install(CODE "file(TOUCH \"\${CMAKE_INSTALL_PREFIX}/mods/custom_mod_files_go_here.txt\")" COMPONENT 2s2h)
@@ -268,7 +280,7 @@ endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(CPACK_GENERATOR "External")
-elseif(CMAKE_SYSTEM_NAME MATCHES "Windows|NintendoSwitch|CafeOS")
+elseif(CMAKE_SYSTEM_NAME MATCHES "Windows|NintendoSwitch|CafeOS|Vita")
     set(CPACK_GENERATOR "ZIP")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set(CPACK_GENERATOR "Bundle")

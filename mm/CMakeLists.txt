@@ -113,7 +113,7 @@ endif()
 
 list(FILTER ship__ EXCLUDE REGEX "2s2h/Extractor/*")
 
-if(NOT CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch|CafeOS")
+if(NOT CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch|CafeOS|Vita")
     file(GLOB_RECURSE ship__Extractor RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "2s2h/Extractor/*.c"
         "2s2h/Extractor/*.cpp"
@@ -400,6 +400,32 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
         target_link_options(${PROJECT_NAME} PRIVATE
             -pthread
         )
+    elseif (CMAKE_SYSTEM_NAME STREQUAL "Vita")
+        target_compile_options(${PROJECT_NAME} PRIVATE
+            -Wall -Wextra -Wno-error
+            -Wno-return-type
+            -Wno-unused-parameter
+            -Wno-unused-function
+            -Wno-unused-variable
+            -Wno-missing-field-initializers
+            -Wno-parentheses
+            -Wno-narrowing
+            -Wno-missing-braces
+            $<$<COMPILE_LANGUAGE:C>:
+                -Werror-implicit-function-declaration
+                -Wno-incompatible-pointer-types
+            >
+            $<$<COMPILE_LANGUAGE:CXX>:-fpermissive>
+            $<$<COMPILE_LANGUAGE:CXX>:
+                -Wno-c++11-narrowing
+                -Wno-deprecated-enum-enum-conversion
+            >
+            -pthread
+        )
+
+        target_link_options(${PROJECT_NAME} PRIVATE
+            -pthread
+        )
     elseif (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
         target_compile_options(${PROJECT_NAME} PRIVATE
             -O2
@@ -497,7 +523,7 @@ target_precompile_headers(${PROJECT_NAME} PRIVATE
 if (CMAKE_GENERATOR MATCHES "Visual Studio")
     set(VS_COPY_ASSETS_CMD ${CMAKE_COMMAND} -E copy_directory_if_different $<TARGET_FILE_DIR:2ship>/assets ${CMAKE_BINARY_DIR}/mm/assets)
 endif()
-if(NOT CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch|CafeOS")
+if(NOT CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch|CafeOS|Vita")
     add_custom_command(
         TARGET ${PROJECT_NAME}
         POST_BUILD
@@ -514,7 +540,7 @@ endif()
 add_dependencies(${PROJECT_NAME}
     libultraship
 )
-if(NOT CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch|CafeOS")
+if(NOT CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch|CafeOS|Vita")
 add_dependencies(${PROJECT_NAME}
     ZAPDLib
 )
@@ -562,6 +588,21 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
         -lglad
         Threads::Threads
     )
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Vita")
+    find_package(SDL2 REQUIRED)
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package(Threads REQUIRED)
+    target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/vita/vita_platform.c)
+    set(ADDITIONAL_LIBRARY_DEPENDENCIES
+        "libultraship;"
+        SDL2::SDL2
+        vitaGL
+        vitashark
+        SceShaccCg_stub
+        mathneon
+        SceKernelDmacMgr_stub
+        Threads::Threads
+    )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
     find_package(SDL2 REQUIRED)
     set(ADDITIONAL_LIBRARY_DEPENDENCIES
@@ -599,7 +640,7 @@ else()
 
 endif()
 
-if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin|NintendoSwitch|CafeOS")
+if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin|NintendoSwitch|CafeOS|Vita")
 INSTALL(TARGETS 2ship DESTINATION . COMPONENT 2s2h)
 endif()
 
@@ -616,7 +657,7 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/macosx/Info.plist.in ${CMAKE_BINARY_
 INSTALL(TARGETS 2ship DESTINATION ../MacOS COMPONENT 2s2h)
 INSTALL(FILES ${CMAKE_BINARY_DIR}/gamecontrollerdb.txt DESTINATION ../MacOS COMPONENT 2s2h)
 INSTALL(FILES ${CMAKE_BINARY_DIR}/mm/2ship.o2r DESTINATION ../Resources COMPONENT 2s2h)
-elseif(NOT "${CMAKE_SYSTEM_NAME}" MATCHES "NintendoSwitch|CafeOS")
+elseif(NOT "${CMAKE_SYSTEM_NAME}" MATCHES "NintendoSwitch|CafeOS|Vita")
 INSTALL(FILES ${CMAKE_BINARY_DIR}/gamecontrollerdb.txt DESTINATION . COMPONENT 2s2h)
 endif()
 
@@ -656,5 +697,22 @@ wut_create_wuhb(${PROJECT_NAME}
 )
 
 INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/2s2h.rpx ${CMAKE_CURRENT_BINARY_DIR}/2s2h.wuhb DESTINATION . COMPONENT 2s2h)
+
+elseif(CMAKE_SYSTEM_NAME MATCHES "Vita")
+
+include("${VITASDK}/share/vita.cmake")
+
+set(VITA_TITLEID  "TSHP00001")
+set(VITA_APP_NAME "2Ship2Harkinian")
+set(VITA_VERSION  "01.00")
+
+
+vita_create_self(2s2h.self ${PROJECT_NAME})
+vita_create_vpk(2s2h.vpk ${VITA_TITLEID} 2s2h.self
+    VERSION ${VITA_VERSION}
+    NAME    ${VITA_APP_NAME}
+)
+
+INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/2s2h.vpk DESTINATION . COMPONENT 2s2h)
 
 endif()
