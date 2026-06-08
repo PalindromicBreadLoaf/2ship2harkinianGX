@@ -11,6 +11,8 @@ if(VITA)
     set(CMAKE_SYSTEM_NAME "Vita")
     set(USE_OPENGLES ON CACHE BOOL "Use the OpenGL ES renderer path (vitaGL)" FORCE)
     add_compile_definitions(__VITA__)
+    # Force re-enable C++ extensions
+    add_compile_definitions(_GNU_SOURCE)
     foreach(lang C CXX)
         set(CMAKE_${lang}_LINK_LIBRARY_USING_WHOLE_ARCHIVE_SUPPORTED TRUE)
         set(CMAKE_${lang}_LINK_LIBRARY_USING_WHOLE_ARCHIVE
@@ -177,8 +179,10 @@ add_compile_definitions(CONTROLLERBUTTONS_T=uint32_t)
 ################################################################################
 add_subdirectory(libultraship ${CMAKE_BINARY_DIR}/libultraship)
 target_compile_definitions(libultraship PUBLIC INCLUDE_MPQ_SUPPORT)
-add_subdirectory(ZAPDTR/ZAPD ${CMAKE_BINARY_DIR}/ZAPD)
-add_subdirectory(OTRExporter)
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Vita")
+    add_subdirectory(ZAPDTR/ZAPD ${CMAKE_BINARY_DIR}/ZAPD)
+    add_subdirectory(OTRExporter)
+endif()
 add_subdirectory(mm)
 
 set_property(TARGET 2ship PROPERTY APPIMAGE_DESKTOP_FILE_TERMINAL YES)
@@ -198,6 +202,8 @@ install(DIRECTORY "${CMAKE_SOURCE_DIR}/mm/assets/xml/" DESTINATION ./assets/xml 
 endif()
 
 find_package(Python3 COMPONENTS Interpreter)
+
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Vita")
 
 # Target to generate OTRs
 add_custom_target(
@@ -232,6 +238,8 @@ add_custom_target(
     COMMENT "Generating 2ship.o2r..."
     DEPENDS ZAPD
 )
+
+endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
 file(COPY ${CMAKE_SOURCE_DIR}/mm/linux/2s2hIcon.png DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
