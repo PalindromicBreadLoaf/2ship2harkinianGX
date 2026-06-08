@@ -593,6 +593,11 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Vita")
         ${CMAKE_CURRENT_SOURCE_DIR}/vita/vita_platform.c
         ${CMAKE_CURRENT_SOURCE_DIR}/vita/extractor_stubs.cpp
     )
+    # Force link pthread functions
+    target_link_options(${PROJECT_NAME} PRIVATE
+        -Wl,-u,pthread_cancel
+        -Wl,-u,pthread_once
+    )
     target_include_directories(${PROJECT_NAME} PRIVATE ${VITASDK}/arm-vita-eabi/include/opus)
     set(ADDITIONAL_LIBRARY_DEPENDENCIES
         "libultraship;"
