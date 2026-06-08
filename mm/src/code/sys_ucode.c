@@ -16,7 +16,8 @@ size_t SysUcode_GetUCodeBootSize(void) {
     return (uintptr_t)rspbootTextEnd - (uintptr_t)rspbootTextStart;
 }
 
-UcodeHandlers SysUcode_GetUCode(void) {
+// This is identical to before, GCC just doesn't realise it
+uint32_t SysUcode_GetUCode(void) {
     return initialgspUcodeText;
 }
 
