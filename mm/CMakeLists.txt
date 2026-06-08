@@ -68,7 +68,7 @@ if (NOT TARGET libultraship)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../libultraship ${CMAKE_BINARY_DIR}/libultraship)
 endif()
 
-if (NOT TARGET ZAPDLib)
+if (NOT TARGET ZAPDLib AND NOT CMAKE_SYSTEM_NAME STREQUAL "Vita")
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../ZAPDTR/ZAPD ${CMAKE_BINARY_DIR}/ZAPD)
 endif()
 
@@ -412,18 +412,17 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
             -Wno-narrowing
             -Wno-missing-braces
             $<$<COMPILE_LANGUAGE:C>:
-                -Werror-implicit-function-declaration
+                -Wno-error=implicit-function-declaration
                 -Wno-incompatible-pointer-types
+                -Wno-int-conversion
+                -Wno-discarded-qualifiers
+                -Wno-builtin-declaration-mismatch
             >
             $<$<COMPILE_LANGUAGE:CXX>:-fpermissive>
             $<$<COMPILE_LANGUAGE:CXX>:
                 -Wno-c++11-narrowing
                 -Wno-deprecated-enum-enum-conversion
             >
-            -pthread
-        )
-
-        target_link_options(${PROJECT_NAME} PRIVATE
             -pthread
         )
     elseif (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
@@ -590,18 +589,28 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
     )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Vita")
     find_package(SDL2 REQUIRED)
-    set(THREADS_PREFER_PTHREAD_FLAG ON)
-    find_package(Threads REQUIRED)
-    target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/vita/vita_platform.c)
+    target_sources(${PROJECT_NAME} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/vita/vita_platform.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/vita/extractor_stubs.cpp
+    )
+    target_include_directories(${PROJECT_NAME} PRIVATE ${VITASDK}/arm-vita-eabi/include/opus)
     set(ADDITIONAL_LIBRARY_DEPENDENCIES
         "libultraship;"
         SDL2::SDL2
         vitaGL
         vitashark
+        SceShaccCgExt
         SceShaccCg_stub
         mathneon
         SceKernelDmacMgr_stub
-        Threads::Threads
+        taihen_stub
+        opusfile
+        opus
+        vorbisfile
+        vorbis
+        ogg
+        png
+        z
     )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
     find_package(SDL2 REQUIRED)
