@@ -720,6 +720,8 @@ set(VITA_TITLEID  "TSHP00001")
 set(VITA_APP_NAME "2Ship2Harkinian")
 set(VITA_VERSION  "01.00")
 
+# Request extended memory
+set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12")
 
 vita_create_self(2s2h.self ${PROJECT_NAME})
 vita_create_vpk(2s2h.vpk ${VITA_TITLEID} 2s2h.self
