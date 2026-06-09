@@ -236,9 +236,11 @@ retry:
         osRecvMesg(&gfxCtx->queue, NULL, OS_MESG_NOBLOCK);
     }
 
+#ifndef __VITA__
     gfxCtx->schedMsgQ = &gSchedContext.cmdQ;
     osSendMesg(&gSchedContext.cmdQ, OS_MESG_PTR(scTask), OS_MESG_BLOCK);
     Sched_SendEntryMsg(&gSchedContext);
+#endif
 }
 
 void Graph_UpdateGame(GameState* gameState) {
