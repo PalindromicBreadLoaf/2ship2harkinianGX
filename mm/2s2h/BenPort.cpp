@@ -175,6 +175,7 @@ OTRGlobals::OTRGlobals() {
 
     BenGui::SetupMenu();
 
+#ifndef __VITA__
     if (shipArchiveVersionMatch) {
 
         auto overlay = context->GetInstance()->GetWindow()->GetGui()->GetGameOverlay();
@@ -190,6 +191,7 @@ OTRGlobals::OTRGlobals() {
         fontStandardLargest = CreateFontWithSize(24.0f, "fonts/Montserrat-Regular.ttf");
         ImGui::GetIO().FontDefault = fontStandardLarger;
     }
+#endif
 
     previousImGuiScaleIndex = -1;
     previousImGuiScale = defaultImGuiScale;
@@ -259,8 +261,20 @@ extern std::shared_ptr<BenGui::BenMenu> mBenMenu;
 
 void OTRGlobals::RunExtract(int argc, char* argv[]) {
 #ifdef __VITA__
-    // Ignore extraction logic
+    // Ignore extraction logic and check for file presence.
     CheckAndCreateModFolder();
+    if (!std::filesystem::exists(portArchivePath) || !shipArchiveVersionMatch ||
+        !context->GetResourceManager()->IsLoaded()) {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Invalid 2ship.o2r",
+                                 "Please place 2ship.o2r matching this build in ux0:data/2ship.", nullptr);
+        exit(1);
+    }
+
+    std::string mmPath = Ship::Context::LocateFileAcrossAppDirs("mm.o2r", appShortName);
+    if (!std::filesystem::exists(mmPath)) {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Missing mm.o2r", "Please place mm.o2r in ux0:data/2ship.", nullptr);
+        exit(1);
+    }
     return;
 #endif
     bool extractDone = false;
@@ -866,7 +880,9 @@ void OTRAudio_Thread() {
 // C->C++ Bridge
 extern "C" void OTRAudio_Init() {
     // Precache all our samples, sequences, etc...
+#ifndef __VITA__
     ResourceMgr_LoadDirectory("audio");
+#endif
 
     if (!audio.running) {
         audio.running = true;
@@ -984,8 +1000,10 @@ extern "C" void InitOTR(int argc, char* argv[]) {
 
     GameInteractor::Instance = new GameInteractor();
     AudioCollection::Instance = new AudioCollection();
+#ifndef __VITA__
     LoadGuiTextures();
     BenGui::SetupGuiElements();
+#endif
     ShipInit::InitAll();
     Rando::Init();
     GfxPatcher_ApplyNecessaryAuthenticPatches();
@@ -1192,14 +1210,18 @@ void RunCommands(Gfx* Commands, const std::vector<std::unordered_map<Mtx*, MtxF>
     auto intp = wnd->GetInterpreterWeak().lock().get();
     intp->mInterpolationIndex = 0;
 
+#ifndef __VITA__
     UIWidgets::Colors themeColor =
         static_cast<UIWidgets::Colors>(CVarGetInteger("gSettings.Menu.Theme", UIWidgets::Colors::LightBlue));
     ImGui::PushStyleColor(ImGuiCol_TitleBgActive, UIWidgets::ColorValues.at(themeColor));
+#endif
     for (const auto& m : mtx_replacements) {
         wnd->DrawAndRunGraphicsCommands(Commands, m);
         intp->mInterpolationIndex++;
     }
+#ifndef __VITA__
     ImGui::PopStyleColor();
+#endif
 }
 
 // C->C++ Bridge
