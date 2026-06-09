@@ -25,6 +25,26 @@
 #define strdup _strdup
 #endif
 
+#ifdef __VITA__
+static int AudioLoad_TryGetSoundFontIndexFromPath(const char* path, int* index) {
+    const char* marker = strstr(path, "Soundfont_");
+    char* end = NULL;
+    long parsedIndex;
+
+    if (marker == NULL) {
+        return false;
+    }
+
+    parsedIndex = strtol(marker + strlen("Soundfont_"), &end, 10);
+    if (end == marker + strlen("Soundfont_") || parsedIndex < 0 || parsedIndex > INT32_MAX) {
+        return false;
+    }
+
+    *index = (int)parsedIndex;
+    return true;
+}
+#endif
+
 /**
  * SoundFont Notes:
  *
@@ -1278,6 +1298,13 @@ void AudioLoad_Init(void* heap, size_t heapSize) {
     gFontMap = calloc(customFntListSize + fntListSize, sizeof(char*));
     gFontMapSize = customFntListSize + fntListSize;
     for (int i = 0; i < fntListSize; i++) {
+#ifdef __VITA__
+        int fontIndex;
+        if (AudioLoad_TryGetSoundFontIndexFromPath(fntList[i], &fontIndex) && fontIndex < gFontMapSize) {
+            gFontMap[fontIndex] = strdup(fntList[i]);
+            continue;
+        }
+#endif
         SoundFont* sf = ResourceMgr_LoadAudioSoundFontByName(fntList[i]);
         gFontMap[sf->fntIndex] = strdup(fntList[i]);
     }
