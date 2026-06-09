@@ -258,6 +258,11 @@ extern std::shared_ptr<BenGui::BenMenu> mBenMenu;
 }
 
 void OTRGlobals::RunExtract(int argc, char* argv[]) {
+#ifdef __VITA__
+    // Ignore extraction logic
+    CheckAndCreateModFolder();
+    return;
+#endif
     bool extractDone = false;
     ExtractSteps extractStep = ES_PORT_ARCHIVE;
     WindowsSteps windowsStep = WS_TEMP;
